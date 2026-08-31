@@ -1,0 +1,9 @@
+name: kservice_scale
+description: Transport-independent electronic scale protocol core for Dart and Flutter POS applications.
+version: 0.1.0
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dev_dependencies:
+  lints: ^6.0.0
