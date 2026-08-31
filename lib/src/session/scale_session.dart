@@ -38,16 +38,19 @@ class ScaleSession {
       await _subscription?.cancel();
       _subscription = null;
       protocol.reset();
-      await transport.open();
       _subscription = transport.bytes.listen(
         (bytes) {
           for (final event in protocol.addBytes(bytes)) {
             _events.add(event);
           }
         },
-        onError: _events.addError,
+        onError: (Object error, StackTrace stackTrace) {
+          _events.addError(error, stackTrace);
+          _setState(ScaleSessionState.disconnected);
+        },
         onDone: () => _setState(ScaleSessionState.disconnected),
       );
+      await transport.open();
       _setState(ScaleSessionState.connected);
     } catch (error, stackTrace) {
       try {

@@ -1,8 +1,5 @@
 library;
 
-export 'src/model/scale_reading.dart';
-export 'src/model/scale_weight.dart';
-export 'src/protocol/generic_ascii_scale_protocol.dart';
-export 'src/protocol/scale_protocol.dart';
-export 'src/session/scale_session.dart';
-export 'src/transport/scale_transport.dart';
+export 'kservice_scale_core.dart';
+export 'src/transport/android_usb_serial_scale_transport.dart';
+export 'src/transport/serial_scale_transport.dart';

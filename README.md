@@ -1,6 +1,8 @@
 # kservice_scale
 
-`kservice_scale` 是独立于打印机的电子秤协议核心。它负责解析称重报文和编排连接会话，不绑定具体串口、USB、蓝牙或厂家 SDK。
+`kservice_scale` 是独立于打印机的电子秤连接与协议包。它提供通用 TCP、桌面串口和 Android USB-UART 连接，同时保留可插拔接口供后续厂家 SDK 使用。
+
+Flutter 应用使用 `package:kservice_scale/kservice_scale.dart`；只需要协议解析或 TCP 且不依赖 Flutter 平台插件时，可以使用 `package:kservice_scale/kservice_scale_core.dart`。
 
 ## 当前能力
 
@@ -11,6 +13,74 @@
 - 使用十进制定点值保存重量，避免先转换成 `double` 造成精度损失
 - 提供 `ScaleTransport`，后续厂家 SDK 或平台连接只需实现该接口
 - 控制命令默认为空，只有拿到厂家协议后才允许配置置零、去皮等指令
+
+## 通用连接
+
+| 连接 | Android | Windows | macOS | Linux |
+|------|---------|---------|-------|-------|
+| TCP 网络秤 | ✅ | ✅ | ✅ | ✅ |
+| 系统串口 / USB 虚拟 COM | - | ✅ | ✅ | ✅ |
+| USB-UART OTG | ✅ | - | - | - |
+
+Android USB-UART 支持 CDC、CH340、CP210x、FTDI 和 PL2303。原生 USB HID、USB Bulk 以及厂家私有设备不属于通用串口，后续通过厂家 SDK 适配。
+
+### TCP 网络秤
+
+```dart
+final transport = TcpScaleTransport(
+  host: '192.168.1.80',
+  port: 4001,
+);
+
+final session = ScaleSession(
+  transport: transport,
+  protocol: GenericAsciiScaleProtocol(),
+);
+
+await session.connect();
+```
+
+### Windows / macOS / Linux 串口
+
+先枚举端口，再使用设备手册规定的串口参数：
+
+```dart
+final devices = listSerialScaleDevices();
+for (final device in devices) {
+  print('${device.displayName} ${device.type}');
+}
+
+final transport = SerialScaleTransport(
+  portName: devices.first.name, // COM3 或 /dev/ttyUSB0
+  settings: const ScaleSerialSettings(
+    baudRate: 9600,
+    dataBits: 8,
+    stopBits: 1,
+    parity: ScaleSerialParity.none,
+  ),
+);
+```
+
+Linux 需要为串口设备配置 udev 权限；macOS 沙盒应用需要相应设备权限。桌面串口底层使用 `libserialport`，宿主必须安装或随应用捆绑对应动态库，也可以通过 `LIBSERIALPORT_PATH` 指定路径。发布应用时需要遵守其 LGPL 许可证要求。当前没有依赖 `flutter_libserialport`，因为其 Android Gradle 配置仍使用已移除的 `jcenter()`，会导致新版 Flutter 的 APK 构建失败。
+
+### Android USB-UART
+
+```dart
+final devices = await listAndroidUsbSerialDevices();
+final transport = AndroidUsbSerialScaleTransport(
+  device: devices.first,
+  settings: const ScaleSerialSettings(baudRate: 9600),
+);
+
+final session = ScaleSession(
+  transport: transport,
+  protocol: GenericAsciiScaleProtocol(),
+);
+
+await session.connect(); // 必要时弹出 Android USB 授权
+```
+
+必须使用枚举结果中的设备对象，不能只按 VID/PID 随意选择；多台相同型号设备无法唯一确认时会返回 `deviceAmbiguous`。
 
 ## 通用 ASCII 报文
 
@@ -111,9 +181,8 @@ final protocol = GenericAsciiScaleProtocol(
 
 ## 边界
 
-当前包是通用协议核心，不会自行打开串口或申请 USB/蓝牙权限。下一阶段应根据实际设备选择：
+当前包已覆盖通用 TCP、桌面串口和 Android USB-UART。下一阶段根据实际设备选择：
 
-- 通用 USB 转串口适配包
-- Android USB Host 适配包
 - 蓝牙串口适配包
+- 原生 USB HID / Bulk 适配包
 - 厂家 SDK 专用适配包，例如 `kservice_scale_<vendor>`

@@ -1,9 +1,24 @@
 name: kservice_scale
-description: Transport-independent electronic scale protocol core for Dart and Flutter POS applications.
-version: 0.1.0
+description: Cross-platform electronic scale connections and protocol core for Flutter POS applications.
+version: 0.2.0
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
+  flutter: '>=3.22.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  libserialport: ^0.3.0
 
 dev_dependencies:
-  lints: ^6.0.0
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.wajipu.kservice_scale
+        pluginClass: KserviceScalePlugin

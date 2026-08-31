@@ -1,6 +1,8 @@
+// ignore_for_file: avoid_print
+
 import 'dart:convert';
 
-import 'package:kservice_scale/kservice_scale.dart';
+import 'package:kservice_scale/kservice_scale_core.dart';
 
 void main() {
   final protocol = GenericAsciiScaleProtocol();

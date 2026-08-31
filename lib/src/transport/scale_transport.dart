@@ -5,6 +5,8 @@ abstract interface class ScaleTransport {
 
   bool get isOpen;
 
+  /// Must be listenable before [open] so devices that publish immediately do
+  /// not lose their first frame.
   Stream<List<int>> get bytes;
 
   Future<void> open();
@@ -12,4 +14,29 @@ abstract interface class ScaleTransport {
   Future<void> write(List<int> bytes);
 
   Future<void> close();
+}
+
+enum ScaleTransportErrorCode {
+  unsupportedPlatform,
+  invalidConfiguration,
+  deviceNotFound,
+  deviceAmbiguous,
+  openFailed,
+  disconnected,
+  writeFailed,
+}
+
+class ScaleTransportException implements Exception {
+  const ScaleTransportException({
+    required this.code,
+    required this.message,
+    this.cause,
+  });
+
+  final ScaleTransportErrorCode code;
+  final String message;
+  final Object? cause;
+
+  @override
+  String toString() => '${code.name}: $message';
 }
