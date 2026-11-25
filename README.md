@@ -117,6 +117,40 @@ final protocol = GenericAsciiScaleProtocol(
 );
 ```
 
+## 上海大华计价秤（连续输出）
+
+部分上海大华计价秤在 `9600 8N1` 下连续输出形如下面的帧（净重 / 单价 / 金额）：
+
+```text
+" 0065    000     000\r"
+```
+
+该帧包含多个数字且没有单位，通用解析器会返回 `ambiguousWeight` / `missingUnit`。
+这类设备请使用专用的 `DahuaScaleProtocol`，它只取指定字段作为净重并忽略单价与金额：
+
+```dart
+final protocol = DahuaScaleProtocol(
+  // 默认：帧内整数按克解释，以 kg 三位小数表示（0065 -> 0.065 kg）。
+  unit: ScaleUnit.kilogram,
+  fractionDigits: 3,
+);
+
+final session = ScaleSession(
+  transport: transport, // 例如 AndroidUsbSerialScaleTransport
+  protocol: protocol,
+);
+
+session.readings.listen((reading) {
+  if (reading.ready) {
+    print(reading.weight); // 0.065 kg
+  }
+});
+```
+
+若设备的整数表示克（`0065` -> `65 g`），改为 `unit: ScaleUnit.gram, fractionDigits: 0`。
+字段顺序不同可调整 `weightFieldIndex`（默认 `0`，即净重）；帧不含稳定性标志时默认按稳定上报，
+需要判稳可设 `assumeStable: false`。
+
 ## 精确重量
 
 `ScaleWeight` 保存原始十进制位数：

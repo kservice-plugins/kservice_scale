@@ -1,3 +1,7 @@
+## Unreleased
+
+- Add `DahuaScaleProtocol` for Shanghai Dahua price-computing scales that stream multi-field frames such as `" 0065    000     000\r"`.
+
 ## 0.2.0
 
 - Add TCP scale connections for network scales.
